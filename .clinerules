@@ -1,0 +1,47 @@
+# UniNotes Proje Kuralları ve Öğrenilen Bilgiler
+
+## Proje Yapısı
+- Proje, Go dilinde Clean Architecture prensipleriyle geliştirilecektir
+- Dizin yapısı şu şekilde olacaktır:
+  - cmd/server/main.go: Ana uygulama giriş noktası
+  - domain/: Temel varlıklar ve iş kuralları
+  - usecase/: Uygulama senaryoları
+  - adapter/: Altyapı uygulamaları (veritabanı, dosya sistemi vb.)
+  - infrastructure/: Çerçeve ve dağıtım katmanı
+
+## Kod Standartları
+- Go standart formatı (gofmt) kullanılacaktır
+- Fonksiyon ve değişken isimleri camelCase olacaktır
+- Paket isimleri küçük harflerle yazılacaktır
+- Her fonksiyon için açıklayıcı yorumlar eklenecektir
+- Hata yönetimi için Go'nun standart hata yönetimi yaklaşımı kullanılacaktır
+
+## Veritabanı
+- PostgreSQL kullanılacaktır
+- Veritabanı bağlantısı için GORM kütüphanesi kullanılacaktır
+- Veritabanı şeması migration'lar ile yönetilecektir
+
+## API
+- RESTful API prensipleri uygulanacaktır
+- JSON formatında veri alışverişi yapılacaktır
+- HTTP durum kodları doğru şekilde kullanılacaktır
+- API endpoint'leri versiyonlanacaktır (örn. /api/v1/...)
+
+## Güvenlik
+- JWT tabanlı kimlik doğrulama kullanılacaktır
+- Kullanıcı şifreleri bcrypt ile hash'lenecektir
+- HTTPS kullanılacaktır
+- CORS politikaları uygulanacaktır
+
+## Test
+- Her katman için birim testleri yazılacaktır
+- Entegrasyon testleri için testcontainers kullanılacaktır
+- Test kapsamı %80'in üzerinde olacaktır
+
+## Dağıtım
+- Docker kullanılarak konteynerize edilecektir
+- CI/CD için GitHub Actions kullanılacaktır
+- VPS üzerinde dağıtım yapılacaktır
+
+## Öğrenilen Bilgiler
+- Proje henüz başlangıç aşamasındadır, öğrenilen bilgiler eklendikçe bu bölüm güncellenecektir
