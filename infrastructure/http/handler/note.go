@@ -14,15 +14,17 @@ import (
 
 // NoteHandler, not işlemlerini yönetir
 type NoteHandler struct {
-	noteService *usecase.NoteService
-	likeService *usecase.LikeService
+	noteService    *usecase.NoteService
+	likeService    *usecase.LikeService
+	commentService *usecase.CommentService
 }
 
 // NewNoteHandler, yeni bir NoteHandler örneği oluşturur
-func NewNoteHandler(noteService *usecase.NoteService, likeService *usecase.LikeService) *NoteHandler {
+func NewNoteHandler(noteService *usecase.NoteService, likeService *usecase.LikeService, commentService *usecase.CommentService) *NoteHandler {
 	return &NoteHandler{
-		noteService: noteService,
-		likeService: likeService,
+		noteService:    noteService,
+		likeService:    likeService,
+		commentService: commentService,
 	}
 }
 
@@ -443,6 +445,26 @@ func (h *NoteHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Kullanıcı ID'sini al (opsiyonel)
+	userID, _ := middleware.GetUserID(r)
+
+	// Notu bul ve erişim kontrolü yap
+	note, err := h.noteService.GetNote(uint(noteID))
+	if err != nil {
+		if err == usecase.ErrNoteNotFound {
+			http.Error(w, "Not bulunamadı", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Not getirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Eğer not herkese açık değilse ve kullanıcı notu oluşturan değilse, erişimi reddet
+	if !note.IsPublic && note.UserID != userID {
+		http.Error(w, "Bu notun yorumlarına erişim izniniz yok", http.StatusForbidden)
+		return
+	}
+
 	// Sayfalama parametrelerini al
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
@@ -472,9 +494,16 @@ func (h *NoteHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Yorumları kullanıcı bilgileriyle zenginleştir
+	enrichedComments, err := h.commentService.EnrichNoteComments(comments)
+	if err != nil {
+		http.Error(w, "Yorumları zenginleştirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Başarılı yanıt
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(comments)
+	json.NewEncoder(w).Encode(enrichedComments)
 }
 
 // LikeNote, bir notu beğenir

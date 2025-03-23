@@ -9,6 +9,7 @@ Bu doküman, UniNotes platformundaki tüm API endpoint'lerini ve kullanımların
 - [Not (Note) API](#not-note-api)
 - [PDF API](#pdf-api)
 - [Beğeni (Like) API](#beğeni-like-api)
+- [Yorum (Comment) API](#yorum-comment-api)
 
 ## Genel Bilgiler
 
@@ -395,7 +396,7 @@ API, aşağıdaki HTTP durum kodlarını kullanarak hata durumlarını bildirir:
 
 **Endpoint:** `GET /api/v1/notes/{id}/comments`
 
-**Kimlik Doğrulama:** Gerekli değil
+**Kimlik Doğrulama:** Opsiyonel (Özel notlar için gerekli)
 
 **Sorgu Parametreleri:**
 - `limit` (isteğe bağlı): Sayfalama için limit (varsayılan: 10)
@@ -406,10 +407,13 @@ API, aşağıdaki HTTP durum kodlarını kullanarak hata durumlarını bildirir:
 [
   {
     "id": 456,
-    "noteId": 123,
+    "contentId": 123,
     "userId": 42,
+    "username": "johndoe",
+    "fullName": "John Doe",
     "content": "Harika bir not, teşekkürler!",
-    "createdAt": "2025-03-22T17:30:45Z"
+    "createdAt": "2025-03-22T17:30:45Z",
+    "updatedAt": "2025-03-22T17:30:45Z"
   },
   // ... diğer yorumlar
 ]
@@ -716,7 +720,7 @@ PDF dosyası içeriği (application/pdf)
 
 **Endpoint:** `GET /api/v1/pdfs/{id}/comments`
 
-**Kimlik Doğrulama:** Gerekli değil
+**Kimlik Doğrulama:** Opsiyonel (Özel PDF'ler için gerekli)
 
 **Sorgu Parametreleri:**
 - `limit` (isteğe bağlı): Sayfalama için limit (varsayılan: 10)
@@ -727,11 +731,14 @@ PDF dosyası içeriği (application/pdf)
 [
   {
     "id": 789,
-    "pdfId": 456,
+    "contentId": 456,
     "userId": 42,
+    "username": "johndoe",
+    "fullName": "John Doe",
     "content": "Çok faydalı bir kaynak, teşekkürler!",
     "pageNumber": 5,
-    "createdAt": "2025-03-22T20:30:45Z"
+    "createdAt": "2025-03-22T20:30:45Z",
+    "updatedAt": "2025-03-22T20:30:45Z"
   },
   // ... diğer yorumlar
 ]
@@ -806,33 +813,4 @@ PDF dosyası içeriği (application/pdf)
 
 **Endpoint:** `POST /api/v1/pdfs/{id}/like`
 
-**Kimlik Doğrulama:** Gerekli (JWT Token)
-
-**Başarılı Yanıt (200 OK):**
-```json
-{
-  "message": "PDF başarıyla beğenildi"
-}
-```
-
-### PDF Beğenisini Kaldırma
-
-**Endpoint:** `DELETE /api/v1/pdfs/{id}/like`
-
-**Kimlik Doğrulama:** Gerekli (JWT Token)
-
-**Başarılı Yanıt (200 OK):**
-```json
-{
-  "message": "PDF beğenisi başarıyla kaldırıldı"
-}
-```
-
-### Beğenilen PDF'leri Getirme
-
-**Endpoint:** `GET /api/v1/pdfs/liked`
-
-**Kimlik Doğrulama:** Gerekli (JWT Token)
-
-**Sorgu Parametreleri:**
-- `limit` (isteğe bağlı): Say
+**Kimlik Doğr

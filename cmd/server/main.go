@@ -86,14 +86,15 @@ func main() {
 	noteService := usecase.NewNoteService(noteRepo, commentRepo)
 	pdfService := usecase.NewPDFService(pdfRepo, pdfCommentRepo, pdfAnnotationRepo, pdfStorage)
 	likeService := usecase.NewLikeService(likeRepo, noteRepo, pdfRepo)
+	commentService := usecase.NewCommentService(noteRepo, commentRepo, pdfRepo, pdfCommentRepo, userRepo)
 
 	// Middleware'leri oluştur
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	// Handler'ları oluştur
 	authHandler := handler.NewAuthHandler(authService)
-	noteHandler := handler.NewNoteHandler(noteService, likeService)
-	pdfHandler := handler.NewPDFHandler(pdfService, likeService)
+	noteHandler := handler.NewNoteHandler(noteService, likeService, commentService)
+	pdfHandler := handler.NewPDFHandler(pdfService, likeService, commentService)
 	likeHandler := handler.NewLikeHandler(likeService)
 
 	// Router'ı oluştur

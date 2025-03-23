@@ -15,15 +15,17 @@ import (
 
 // PDFHandler, PDF işlemlerini yönetir
 type PDFHandler struct {
-	pdfService  *usecase.PDFService
-	likeService *usecase.LikeService
+	pdfService     *usecase.PDFService
+	likeService    *usecase.LikeService
+	commentService *usecase.CommentService
 }
 
 // NewPDFHandler, yeni bir PDFHandler örneği oluşturur
-func NewPDFHandler(pdfService *usecase.PDFService, likeService *usecase.LikeService) *PDFHandler {
+func NewPDFHandler(pdfService *usecase.PDFService, likeService *usecase.LikeService, commentService *usecase.CommentService) *PDFHandler {
 	return &PDFHandler{
-		pdfService:  pdfService,
-		likeService: likeService,
+		pdfService:     pdfService,
+		likeService:    likeService,
+		commentService: commentService,
 	}
 }
 
@@ -482,6 +484,26 @@ func (h *PDFHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Kullanıcı ID'sini al (opsiyonel)
+	userID, _ := middleware.GetUserID(r)
+
+	// PDF'i bul ve erişim kontrolü yap
+	pdf, err := h.pdfService.GetPDF(uint(pdfID))
+	if err != nil {
+		if err == usecase.ErrPDFNotFound {
+			http.Error(w, "PDF bulunamadı", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "PDF getirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Eğer PDF herkese açık değilse ve kullanıcı PDF'i yükleyen değilse, erişimi reddet
+	if !pdf.IsPublic && pdf.UserID != userID {
+		http.Error(w, "Bu PDF'in yorumlarına erişim izniniz yok", http.StatusForbidden)
+		return
+	}
+
 	// Sayfalama parametrelerini al
 	limit, offset := getPaginationParams(r)
 
@@ -496,9 +518,16 @@ func (h *PDFHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Yorumları kullanıcı bilgileriyle zenginleştir
+	enrichedComments, err := h.commentService.EnrichPDFComments(comments)
+	if err != nil {
+		http.Error(w, "Yorumları zenginleştirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Başarılı yanıt
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(comments)
+	json.NewEncoder(w).Encode(enrichedComments)
 }
 
 // AddAnnotation, bir PDF'e işaretleme ekler

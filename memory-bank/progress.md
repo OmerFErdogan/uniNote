@@ -25,6 +25,9 @@
 - Loglama sistemi eklendi (`infrastructure/logger`) ve tüm beğeni işlemleri için detaylı log kaydı implementasyonu yapıldı
 - Beğeni işlevselliğindeki hata düzeltildi - artık kullanıcılar içerikleri beğendiklerinde hem beğeni sayısı artıyor hem de beğeni kaydı oluşturuluyor
 - Not ve PDF handler'larında beğeni işlemleri için loglama eklendi
+- Yorum sistemi geliştirildi, kullanıcı bilgileriyle zenginleştirilmiş yorum yanıtları eklendi
+- Yorumlar için kullanıcı adı ve profil bilgilerini içeren CommentResponse yapısı eklendi
+- Not ve PDF yorumları için erişim kontrolü eklendi, özel içeriklerin yorumlarına sadece içerik sahibi erişebilir
 
 ## Devam Eden İşler
 - Gerçek zamanlı işbirliği özelliklerinin implementasyonu
