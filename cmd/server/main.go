@@ -15,14 +15,20 @@ import (
 	apphttp "github.com/OmerFErdogan/uninote/infrastructure/http"
 	"github.com/OmerFErdogan/uninote/infrastructure/http/handler"
 	"github.com/OmerFErdogan/uninote/infrastructure/http/middleware"
+	"github.com/OmerFErdogan/uninote/infrastructure/logger"
 	"github.com/OmerFErdogan/uninote/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
 func main() {
+	// Logger'ı başlat
+	logger.Init()
+	logger.Info("UniNotes uygulaması başlatılıyor...")
+
 	// Yapılandırmayı yükle
 	config, err := env.LoadConfig()
 	if err != nil {
+		logger.Error("Yapılandırma yüklenemedi: %v", err)
 		log.Fatalf("Yapılandırma yüklenemedi: %v", err)
 	}
 
@@ -36,12 +42,15 @@ func main() {
 		SSLMode:  config.DBSSLMode,
 	}
 
+	logger.Info("Veritabanına bağlanılıyor: %s:%s/%s", config.DBHost, config.DBPort, config.DBName)
 	db, err := postgres.NewConnection(dbConfig)
 	if err != nil {
+		logger.Error("Veritabanı bağlantısı kurulamadı: %v", err)
 		log.Fatalf("Veritabanı bağlantısı kurulamadı: %v", err)
 	}
 
 	// Veritabanı modellerini migrate et
+	logger.Info("Veritabanı modelleri migrate ediliyor...")
 	err = postgres.Migrate(db,
 		&postgres.UserModel{},
 		&postgres.NoteModel{},
@@ -52,8 +61,10 @@ func main() {
 		&postgres.ContentLikeModel{},
 	)
 	if err != nil {
+		logger.Error("Veritabanı migrasyonu başarısız: %v", err)
 		log.Fatalf("Veritabanı migrasyonu başarısız: %v", err)
 	}
+	logger.Info("Veritabanı migrasyonu başarılı")
 
 	// Repository'leri oluştur
 	userRepo := postgres.NewUserRepository(db)
@@ -149,14 +160,17 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
+		logger.Info("UniNotes sunucusu port %s üzerinde çalışıyor", port)
 		log.Printf("UniNotes sunucusu port %s üzerinde çalışıyor", port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("Sunucu hatası: %v", err)
 			log.Fatalf("Sunucu hatası: %v", err)
 		}
 	}()
 
 	// Sinyal bekle
 	<-stop
+	logger.Info("Sunucu kapatılıyor...")
 	log.Println("Sunucu kapatılıyor...")
 
 	// Graceful shutdown
@@ -164,17 +178,21 @@ func main() {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("Sunucu kapatma hatası: %v", err)
 		log.Fatalf("Sunucu kapatma hatası: %v", err)
 	}
 
 	// Veritabanı bağlantısını kapat
 	sqlDB, err := db.DB()
 	if err != nil {
+		logger.Error("Veritabanı bağlantısı alınamadı: %v", err)
 		log.Fatalf("Veritabanı bağlantısı alınamadı: %v", err)
 	}
 	if err := sqlDB.Close(); err != nil {
+		logger.Error("Veritabanı bağlantısı kapatılamadı: %v", err)
 		log.Fatalf("Veritabanı bağlantısı kapatılamadı: %v", err)
 	}
 
+	logger.Info("Sunucu başarıyla kapatıldı")
 	log.Println("Sunucu başarıyla kapatıldı")
 }

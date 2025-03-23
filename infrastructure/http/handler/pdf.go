@@ -8,6 +8,7 @@ import (
 
 	"github.com/OmerFErdogan/uninote/domain"
 	"github.com/OmerFErdogan/uninote/infrastructure/http/middleware"
+	"github.com/OmerFErdogan/uninote/infrastructure/logger"
 	"github.com/OmerFErdogan/uninote/usecase"
 	"github.com/go-chi/chi/v5"
 )
@@ -602,7 +603,7 @@ func (h *PDFHandler) LikePDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// PDF'i beğen
+	// PDF'i beğen (like count'u artırır)
 	if err := h.pdfService.LikePDF(uint(pdfID), userID); err != nil {
 		if err == usecase.ErrPDFNotFound {
 			http.Error(w, "PDF bulunamadı", http.StatusNotFound)
@@ -610,6 +611,15 @@ func (h *PDFHandler) LikePDF(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, "PDF beğenme sırasında hata: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Like record'u oluştur (beğeniler listesinde göstermek için)
+	if err := h.likeService.LikeContent(userID, uint(pdfID), "pdf"); err != nil {
+		// Hata durumunda log yaz ama kullanıcıya hata gösterme
+		// çünkü pdf count zaten artırıldı
+		logger.Error("Beğeni kaydı oluşturulurken hata: %v", err)
+	} else {
+		logger.Info("PDF beğeni kaydı oluşturuldu - UserID: %d, PDFID: %d", userID, pdfID)
 	}
 
 	// Başarılı yanıt
@@ -636,7 +646,7 @@ func (h *PDFHandler) UnlikePDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// PDF beğenisini kaldır
+	// PDF beğenisini kaldır (like count'u azaltır)
 	if err := h.pdfService.UnlikePDF(uint(pdfID), userID); err != nil {
 		if err == usecase.ErrPDFNotFound {
 			http.Error(w, "PDF bulunamadı", http.StatusNotFound)
@@ -644,6 +654,15 @@ func (h *PDFHandler) UnlikePDF(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, "PDF beğeni kaldırma sırasında hata: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Like record'unu sil (beğeniler listesinden kaldırmak için)
+	if err := h.likeService.UnlikeContent(userID, uint(pdfID), "pdf"); err != nil {
+		// Hata durumunda log yaz ama kullanıcıya hata gösterme
+		// çünkü pdf count zaten azaltıldı
+		logger.Error("Beğeni kaydı silinirken hata: %v", err)
+	} else {
+		logger.Info("PDF beğeni kaydı silindi - UserID: %d, PDFID: %d", userID, pdfID)
 	}
 
 	// Başarılı yanıt
@@ -665,35 +684,11 @@ func (h *PDFHandler) GetLikedPDFs(w http.ResponseWriter, r *http.Request) {
 	// Sayfalama parametrelerini al
 	limit, offset := getPaginationParams(r)
 
-	// Kullanıcının beğenilerini getir
-	likes, err := h.likeService.GetUserLikes(userID, limit, offset)
+	// Kullanıcının beğendiği PDF'leri doğrudan getir
+	pdfs, err := h.likeService.GetLikedPDFs(userID, limit, offset)
 	if err != nil {
-		http.Error(w, "Beğenileri getirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Beğenilen PDF'leri getirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	// PDF türündeki beğenileri filtrele
-	var pdfIDs []uint
-	for _, like := range likes {
-		if like.Type == "pdf" {
-			pdfIDs = append(pdfIDs, like.ContentID)
-		}
-	}
-
-	// Beğenilen PDF yoksa boş dizi döndür
-	if len(pdfIDs) == 0 {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode([]*domain.PDF{})
-		return
-	}
-
-	// Beğenilen PDF'leri getir
-	pdfs := make([]*domain.PDF, 0, len(pdfIDs))
-	for _, pdfID := range pdfIDs {
-		pdf, err := h.pdfService.GetPDF(pdfID)
-		if err == nil && pdf != nil {
-			pdfs = append(pdfs, pdf)
-		}
 	}
 
 	// Başarılı yanıt

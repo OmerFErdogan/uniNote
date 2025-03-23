@@ -7,6 +7,7 @@ import (
 
 	"github.com/OmerFErdogan/uninote/domain"
 	"github.com/OmerFErdogan/uninote/infrastructure/http/middleware"
+	"github.com/OmerFErdogan/uninote/infrastructure/logger"
 	"github.com/OmerFErdogan/uninote/usecase"
 	"github.com/go-chi/chi/v5"
 )
@@ -493,7 +494,7 @@ func (h *NoteHandler) LikeNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Notu beğen
+	// Notu beğen (like count'u artırır)
 	if err := h.noteService.LikeNote(uint(noteID), userID); err != nil {
 		if err == usecase.ErrNoteNotFound {
 			http.Error(w, "Not bulunamadı", http.StatusNotFound)
@@ -501,6 +502,15 @@ func (h *NoteHandler) LikeNote(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, "Not beğenme sırasında hata: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Like record'u oluştur (beğeniler listesinde göstermek için)
+	if err := h.likeService.LikeContent(userID, uint(noteID), "note"); err != nil {
+		// Hata durumunda log yaz ama kullanıcıya hata gösterme
+		// çünkü note count zaten artırıldı
+		logger.Error("Beğeni kaydı oluşturulurken hata: %v", err)
+	} else {
+		logger.Info("Not beğeni kaydı oluşturuldu - UserID: %d, NoteID: %d", userID, noteID)
 	}
 
 	// Başarılı yanıt
@@ -527,7 +537,7 @@ func (h *NoteHandler) UnlikeNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Not beğenisini kaldır
+	// Not beğenisini kaldır (like count'u azaltır)
 	if err := h.noteService.UnlikeNote(uint(noteID), userID); err != nil {
 		if err == usecase.ErrNoteNotFound {
 			http.Error(w, "Not bulunamadı", http.StatusNotFound)
@@ -535,6 +545,15 @@ func (h *NoteHandler) UnlikeNote(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, "Not beğeni kaldırma sırasında hata: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Like record'unu sil (beğeniler listesinden kaldırmak için)
+	if err := h.likeService.UnlikeContent(userID, uint(noteID), "note"); err != nil {
+		// Hata durumunda log yaz ama kullanıcıya hata gösterme
+		// çünkü note count zaten azaltıldı
+		logger.Error("Beğeni kaydı silinirken hata: %v", err)
+	} else {
+		logger.Info("Not beğeni kaydı silindi - UserID: %d, NoteID: %d", userID, noteID)
 	}
 
 	// Başarılı yanıt
@@ -571,35 +590,11 @@ func (h *NoteHandler) GetLikedNotes(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Kullanıcının beğenilerini getir
-	likes, err := h.likeService.GetUserLikes(userID, limit, offset)
+	// Kullanıcının beğendiği notları doğrudan getir
+	notes, err := h.likeService.GetLikedNotes(userID, limit, offset)
 	if err != nil {
-		http.Error(w, "Beğenileri getirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Beğenilen notları getirme sırasında hata: "+err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	// Not türündeki beğenileri filtrele
-	var noteIDs []uint
-	for _, like := range likes {
-		if like.Type == "note" {
-			noteIDs = append(noteIDs, like.ContentID)
-		}
-	}
-
-	// Beğenilen not yoksa boş dizi döndür
-	if len(noteIDs) == 0 {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode([]*domain.Note{})
-		return
-	}
-
-	// Beğenilen notları getir
-	notes := make([]*domain.Note, 0, len(noteIDs))
-	for _, noteID := range noteIDs {
-		note, err := h.noteService.GetNote(noteID)
-		if err == nil && note != nil {
-			notes = append(notes, note)
-		}
 	}
 
 	// Başarılı yanıt

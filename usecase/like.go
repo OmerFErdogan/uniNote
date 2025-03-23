@@ -148,5 +148,29 @@ func (s *LikeService) IsLikedByUser(userID, contentID uint, contentType string) 
 	return like != nil, nil
 }
 
+// GetLikedNotes, kullanıcının beğendiği notları getirir
+func (s *LikeService) GetLikedNotes(userID uint, limit, offset int) ([]*domain.Note, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	return s.likeRepo.FindLikedNotesByUserID(userID, limit, offset)
+}
+
+// GetLikedPDFs, kullanıcının beğendiği PDF'leri getirir
+func (s *LikeService) GetLikedPDFs(userID uint, limit, offset int) ([]*domain.PDF, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	return s.likeRepo.FindLikedPDFsByUserID(userID, limit, offset)
+}
+
 // Ensure LikeService implements domain.LikeService
 var _ domain.LikeService = (*LikeService)(nil)

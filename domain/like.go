@@ -19,6 +19,8 @@ type LikeRepository interface {
 	FindByUserIDAndContent(userID, contentID uint, contentType string) (*Like, error)
 	FindByContentID(contentID uint, contentType string, limit, offset int) ([]*Like, error)
 	FindByUserID(userID uint, limit, offset int) ([]*Like, error)
+	FindLikedNotesByUserID(userID uint, limit, offset int) ([]*Note, error)
+	FindLikedPDFsByUserID(userID uint, limit, offset int) ([]*PDF, error)
 	Create(like *Like) error
 	Delete(id uint) error
 	DeleteByUserIDAndContent(userID, contentID uint, contentType string) error
@@ -31,4 +33,6 @@ type LikeService interface {
 	GetUserLikes(userID uint, limit, offset int) ([]*Like, error)
 	GetContentLikes(contentID uint, contentType string, limit, offset int) ([]*Like, error)
 	IsLikedByUser(userID, contentID uint, contentType string) (bool, error)
+	GetLikedNotes(userID uint, limit, offset int) ([]*Note, error)
+	GetLikedPDFs(userID uint, limit, offset int) ([]*PDF, error)
 }
