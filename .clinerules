@@ -25,7 +25,7 @@
 - RESTful API prensipleri uygulanacaktır
 - JSON formatında veri alışverişi yapılacaktır
 - HTTP durum kodları doğru şekilde kullanılacaktır
-- API endpoint'leri versiyonlanacaktır (örn. /api/v1/...)
+- API endpointleri versiyonlanacaktır (örn. /api/v1/...)
 
 ## Güvenlik
 - JWT tabanlı kimlik doğrulama kullanılacaktır
