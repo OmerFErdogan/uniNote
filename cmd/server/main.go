@@ -59,6 +59,7 @@ func main() {
 		&postgres.PDFCommentModel{},
 		&postgres.PDFAnnotationModel{},
 		&postgres.ContentLikeModel{},
+		&postgres.InviteModel{},
 	)
 	if err != nil {
 		logger.Error("Veritabanı migrasyonu başarısız: %v", err)
@@ -74,6 +75,7 @@ func main() {
 	pdfCommentRepo := postgres.NewPDFCommentRepository(db)
 	pdfAnnotationRepo := postgres.NewPDFAnnotationRepository(db)
 	likeRepo := postgres.NewLikeRepository(db)
+	inviteRepo := postgres.NewInviteRepository(db)
 
 	// PDF depolama servisini oluştur
 	pdfStorage, err := localfs.NewPDFStorage(config.PDFStoragePath)
@@ -87,6 +89,7 @@ func main() {
 	pdfService := usecase.NewPDFService(pdfRepo, pdfCommentRepo, pdfAnnotationRepo, pdfStorage)
 	likeService := usecase.NewLikeService(likeRepo, noteRepo, pdfRepo)
 	commentService := usecase.NewCommentService(noteRepo, commentRepo, pdfRepo, pdfCommentRepo, userRepo)
+	inviteService := usecase.NewInviteService(inviteRepo, noteRepo, pdfRepo)
 
 	// Middleware'leri oluştur
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -96,6 +99,7 @@ func main() {
 	noteHandler := handler.NewNoteHandler(noteService, likeService, commentService)
 	pdfHandler := handler.NewPDFHandler(pdfService, likeService, commentService)
 	likeHandler := handler.NewLikeHandler(likeService)
+	inviteHandler := handler.NewInviteHandler(inviteService, noteService, pdfService)
 
 	// Router'ı oluştur
 	router := apphttp.NewRouter()
@@ -142,6 +146,9 @@ func main() {
 
 		// Beğeni endpoint'leri
 		likeHandler.RegisterRoutes(r, authMiddleware)
+
+		// Davet bağlantısı endpoint'leri
+		inviteHandler.RegisterRoutes(r, authMiddleware)
 	})
 
 	// Statik dosyaları web klasöründen sun (isteğe bağlı)

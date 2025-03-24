@@ -10,6 +10,7 @@ Bu doküman, UniNotes platformundaki tüm API endpoint'lerini ve kullanımların
 - [PDF API](#pdf-api)
 - [Beğeni (Like) API](#beğeni-like-api)
 - [Yorum (Comment) API](#yorum-comment-api)
+- [Davet Bağlantısı (Invite) API](#davet-bağlantısı-invite-api)
 
 ## Genel Bilgiler
 
@@ -813,4 +814,283 @@ PDF dosyası içeriği (application/pdf)
 
 **Endpoint:** `POST /api/v1/pdfs/{id}/like`
 
-**Kimlik Doğr
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "message": "PDF başarıyla beğenildi"
+}
+```
+
+### PDF Beğenisini Kaldırma
+
+**Endpoint:** `DELETE /api/v1/pdfs/{id}/like`
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "message": "PDF beğenisi başarıyla kaldırıldı"
+}
+```
+
+### Beğenilen PDF'leri Getirme
+
+**Endpoint:** `GET /api/v1/pdfs/liked`
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**Sorgu Parametreleri:**
+- `limit` (isteğe bağlı): Sayfalama için limit (varsayılan: 10)
+- `offset` (isteğe bağlı): Sayfalama için offset (varsayılan: 0)
+
+**Başarılı Yanıt (200 OK):**
+```json
+[
+  {
+    "id": 456,
+    "title": "Makine Öğrenmesi Ders Notları",
+    "description": "2025 Bahar Dönemi Makine Öğrenmesi dersi notları",
+    "userId": 56,
+    "tags": ["yapay zeka", "veri bilimi"],
+    "isPublic": true,
+    "createdAt": "2025-03-22T18:30:45Z",
+    "updatedAt": "2025-03-22T18:30:45Z",
+    "likeCount": 10
+  },
+  // ... diğer PDF'ler
+]
+```
+
+## Davet Bağlantısı (Invite) API
+
+### Not için Davet Bağlantısı Oluşturma
+
+**Endpoint:** `POST /api/v1/notes/{id}/invites`
+
+**Açıklama:** Belirtilen not için bir davet bağlantısı oluşturur.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**URL Parametreleri:**
+- `id`: Not ID'si
+
+**İstek Gövdesi:**
+```json
+{
+  "expiresAt": "2025-04-24T00:00:00Z" // Opsiyonel, belirtilmezse 7 gün sonra sona erer
+}
+```
+
+**Başarılı Yanıt (201 Created):**
+```json
+{
+  "id": 1,
+  "contentId": 123,
+  "type": "note",
+  "token": "abcdef123456",
+  "expiresAt": "2025-04-24T00:00:00Z",
+  "isActive": true,
+  "createdAt": "2025-03-24T04:00:00Z"
+}
+```
+
+### PDF için Davet Bağlantısı Oluşturma
+
+**Endpoint:** `POST /api/v1/pdfs/{id}/invites`
+
+**Açıklama:** Belirtilen PDF için bir davet bağlantısı oluşturur.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**URL Parametreleri:**
+- `id`: PDF ID'si
+
+**İstek Gövdesi:**
+```json
+{
+  "expiresAt": "2025-04-24T00:00:00Z" // Opsiyonel, belirtilmezse 7 gün sonra sona erer
+}
+```
+
+**Başarılı Yanıt (201 Created):**
+```json
+{
+  "id": 1,
+  "contentId": 456,
+  "type": "pdf",
+  "token": "abcdef123456",
+  "expiresAt": "2025-04-24T00:00:00Z",
+  "isActive": true,
+  "createdAt": "2025-03-24T04:00:00Z"
+}
+```
+
+### Not için Davet Bağlantılarını Getirme
+
+**Endpoint:** `GET /api/v1/notes/{id}/invites`
+
+**Açıklama:** Belirtilen not için oluşturulmuş tüm davet bağlantılarını getirir.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**URL Parametreleri:**
+- `id`: Not ID'si
+
+**Başarılı Yanıt (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "contentId": 123,
+    "type": "note",
+    "token": "abcdef123456",
+    "expiresAt": "2025-04-24T00:00:00Z",
+    "isActive": true,
+    "createdAt": "2025-03-24T04:00:00Z"
+  },
+  {
+    "id": 2,
+    "contentId": 123,
+    "type": "note",
+    "token": "ghijkl789012",
+    "expiresAt": "2025-04-30T00:00:00Z",
+    "isActive": true,
+    "createdAt": "2025-03-25T04:00:00Z"
+  }
+]
+```
+
+### PDF için Davet Bağlantılarını Getirme
+
+**Endpoint:** `GET /api/v1/pdfs/{id}/invites`
+
+**Açıklama:** Belirtilen PDF için oluşturulmuş tüm davet bağlantılarını getirir.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**URL Parametreleri:**
+- `id`: PDF ID'si
+
+**Başarılı Yanıt (200 OK):**
+```json
+[
+  {
+    "id": 3,
+    "contentId": 456,
+    "type": "pdf",
+    "token": "mnopqr345678",
+    "expiresAt": "2025-04-24T00:00:00Z",
+    "isActive": true,
+    "createdAt": "2025-03-24T04:00:00Z"
+  },
+  {
+    "id": 4,
+    "contentId": 456,
+    "type": "pdf",
+    "token": "stuvwx901234",
+    "expiresAt": "2025-04-30T00:00:00Z",
+    "isActive": true,
+    "createdAt": "2025-03-25T04:00:00Z"
+  }
+]
+```
+
+### Davet Bağlantısını Devre Dışı Bırakma
+
+**Endpoint:** `DELETE /api/v1/invites/{id}`
+
+**Açıklama:** Belirtilen davet bağlantısını devre dışı bırakır.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**URL Parametreleri:**
+- `id`: Davet bağlantısı ID'si
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "message": "Davet bağlantısı başarıyla devre dışı bırakıldı"
+}
+```
+
+### Davet Bağlantısını Doğrulama
+
+**Endpoint:** `GET /api/v1/invites/{token}`
+
+**Açıklama:** Belirtilen davet bağlantısının geçerli olup olmadığını kontrol eder.
+
+**Kimlik Doğrulama:** Gerekli değil
+
+**URL Parametreleri:**
+- `token`: Davet bağlantısı token'ı
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "valid": true,
+  "contentId": 123,
+  "type": "note",
+  "expiresAt": "2025-04-24T00:00:00Z"
+}
+```
+
+### Davet Bağlantısı ile Not Getirme
+
+**Endpoint:** `GET /api/v1/notes/invite/{token}`
+
+**Açıklama:** Belirtilen davet bağlantısı ile bir notu getirir.
+
+**Kimlik Doğrulama:** Gerekli değil
+
+**URL Parametreleri:**
+- `token`: Davet bağlantısı token'ı
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "id": 123,
+  "title": "Not Başlığı",
+  "content": "Not içeriği...",
+  "userId": 1,
+  "tags": ["etiket1", "etiket2"],
+  "isPublic": false,
+  "viewCount": 10,
+  "likeCount": 5,
+  "commentCount": 3,
+  "createdAt": "2025-03-20T04:00:00Z",
+  "updatedAt": "2025-03-22T04:00:00Z"
+}
+```
+
+### Davet Bağlantısı ile PDF Getirme
+
+**Endpoint:** `GET /api/v1/pdfs/invite/{token}`
+
+**Açıklama:** Belirtilen davet bağlantısı ile bir PDF'i getirir.
+
+**Kimlik Doğrulama:** Gerekli değil
+
+**URL Parametreleri:**
+- `token`: Davet bağlantısı token'ı
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "id": 456,
+  "title": "PDF Başlığı",
+  "description": "PDF açıklaması...",
+  "filePath": "storage/pdfs/1_document.pdf",
+  "fileSize": 1024,
+  "userId": 1,
+  "tags": ["etiket1", "etiket2"],
+  "isPublic": false,
+  "viewCount": 10,
+  "likeCount": 5,
+  "commentCount": 3,
+  "createdAt": "2025-03-20T04:00:00Z",
+  "updatedAt": "2025-03-22T04:00:00Z"
+}
+```

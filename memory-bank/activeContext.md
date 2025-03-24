@@ -4,10 +4,19 @@
 UniNotes - Akademik PDF ve Not Paylaşım Platformu
 
 ## Mevcut Durum  
-Proje temel altyapısı kurulmuş ve API endpoint'leri tamamlanmıştır. Clean Architecture prensipleri uygulanmış, domain katmanında temel varlıklar tanımlanmış, PostgreSQL veritabanı entegrasyonu ve JWT kimlik doğrulama sistemi implementasyonu yapılmıştır. Veritabanı şeması oluşturulmuş, kullanıcı yönetimi, not ve PDF işlemleri için API endpoint'leri tamamlanmıştır. Etiketleme ve etkileşim sistemi (beğenme, yorum yapma) implementasyonu da tamamlanmıştır. Beğeni sistemi optimize edilerek tek bir model üzerinden hem not hem de PDF beğenileri yönetilecek şekilde geliştirilmiştir. Beğeni işlevselliğindeki hata düzeltilmiş, artık kullanıcılar içerikleri beğendiklerinde hem beğeni sayısı artıyor hem de beğeni kaydı oluşturuluyor. Yorum sistemi geliştirilmiş, kullanıcı bilgileriyle zenginleştirilmiş yorum yanıtları eklenmiştir. Şu anda gerçek zamanlı işbirliği özellikleri üzerinde çalışılmaktadır.
+Proje temel altyapısı kurulmuş ve API endpoint'leri tamamlanmıştır. Clean Architecture prensipleri uygulanmış, domain katmanında temel varlıklar tanımlanmış, PostgreSQL veritabanı entegrasyonu ve JWT kimlik doğrulama sistemi implementasyonu yapılmıştır. Veritabanı şeması oluşturulmuş, kullanıcı yönetimi, not ve PDF işlemleri için API endpoint'leri tamamlanmıştır. Etiketleme ve etkileşim sistemi (beğenme, yorum yapma) implementasyonu da tamamlanmıştır. 
+
+Beğeni sistemi optimize edilerek tek bir model üzerinden hem not hem de PDF beğenileri yönetilecek şekilde geliştirilmiştir. Beğeni işlevselliğindeki hata düzeltilmiş, artık kullanıcılar içerikleri beğendiklerinde hem beğeni sayısı artıyor hem de beğeni kaydı oluşturuluyor. Detaylı loglama sistemi eklenmiş ve tüm beğeni işlemleri için log kaydı implementasyonu yapılmıştır.
+
+Yorum sistemi geliştirilmiş, kullanıcı bilgileriyle zenginleştirilmiş yorum yanıtları eklenmiştir. Not ve PDF yorumları için erişim kontrolü eklenerek, özel içeriklerin yorumlarına sadece içerik sahibinin erişebilmesi sağlanmıştır. Yorum API'si için kapsamlı dokümantasyon oluşturulmuştur.
+
+Davet bağlantısı sistemi implementasyonu tamamlanmış, özel notlar ve PDF'ler için davet bağlantısı oluşturma ve kullanma özellikleri eklenmiştir. Bu sayede kullanıcılar, özel içeriklerini davet bağlantısı aracılığıyla başkalarıyla paylaşabileceklerdir. Davet bağlantıları için süresi dolma ve devre dışı bırakma özellikleri de eklenmiştir. Davet bağlantısı API'si için kapsamlı dokümantasyon oluşturulmuştur.
+
+Şu anda gerçek zamanlı işbirliği özellikleri üzerinde çalışılmaktadır.
 
 ## Aktif Görevler  
 - Gerçek zamanlı işbirliği özelliklerinin implementasyonu
+- WebSocket veya SSE kullanarak gerçek zamanlı düzenleme özelliğinin eklenmesi
 - Kullanıcı arayüzünün tasarlanması ve geliştirilmesi
 - Bildirim sistemi implementasyonu
 - Keşfet özelliği implementasyonu
@@ -38,10 +47,34 @@ Proje temel altyapısı kurulmuş ve API endpoint'leri tamamlanmıştır. Clean 
 - 2025-03-23: Yorum sistemi geliştirildi, kullanıcı bilgileriyle zenginleştirilmiş yorum yanıtları eklendi
 - 2025-03-23: Yorumlar için kullanıcı adı ve profil bilgilerini içeren CommentResponse yapısı eklendi
 - 2025-03-23: Not ve PDF yorumları için erişim kontrolü eklendi, özel içeriklerin yorumlarına sadece içerik sahibi erişebilir
+- 2025-03-23: Yorum API'si için kapsamlı dokümantasyon oluşturuldu (docs/comments-api.md)
+- 2025-03-24: Loglama sistemi genişletildi, HTTP istekleri, beğeni işlemleri ve toplu işlemler için özel log fonksiyonları eklendi
+- 2025-03-24: Davet bağlantısı sistemi için domain modeli oluşturuldu (domain/invite.go)
+- 2025-03-24: Davet bağlantısı için repository implementasyonu yapıldı (adapter/postgres/inviterepo.go)
+- 2025-03-24: Davet bağlantısı için service implementasyonu yapıldı (usecase/invite.go)
+- 2025-03-24: Davet bağlantısı için handler implementasyonu yapıldı (infrastructure/http/handler/invite.go)
+- 2025-03-24: Davet bağlantısı API'si için kapsamlı dokümantasyon oluşturuldu (docs/invites-api.md)
+- 2025-03-24: API endpoint'leri dokümantasyonu güncellendi, davet bağlantısı API'si eklendi (docs/api-endpoints.md)
 
 ## Sonraki Adımlar  
-- Bildirim sistemi implementasyonunu tamamlamak
-- Keşfet özelliği implementasyonunu tamamlamak
-- Kütüphane yönetimi implementasyonunu yapmak
-- PDF-Not entegrasyonunu geliştirmek
-- Temel analitik özelliklerini eklemek
+- Gerçek zamanlı işbirliği özelliklerini tamamlamak:
+  - WebSocket veya SSE kullanarak gerçek zamanlı düzenleme
+  - Sürüm kontrolü ve çakışma çözümü
+  - Kullanıcı katkı istatistikleri
+- Bildirim sistemi implementasyonunu tamamlamak:
+  - Beğeni, yorum ve paylaşım bildirimleri
+  - Gerçek zamanlı bildirimler için WebSocket kullanımı
+- Keşfet özelliği implementasyonunu tamamlamak:
+  - Popüler içerikleri listeleme
+  - Etiket ve kategori bazlı filtreleme
+  - Arama fonksiyonu
+- Kütüphane yönetimi implementasyonunu yapmak:
+  - Kullanıcıların kaydettikleri içerikleri organize etmeleri
+  - Koleksiyon oluşturma ve yönetme
+- PDF-Not entegrasyonunu geliştirmek:
+  - PDF'ler üzerinde not alma
+  - PDF'lerden alıntı yaparak zengin notlar oluşturma
+  - Notları PDF olarak dışa aktarma
+- Temel analitik özelliklerini eklemek:
+  - Not görüntülenme, beğeni ve yorum istatistikleri
+  - Popüler içerik analizi
