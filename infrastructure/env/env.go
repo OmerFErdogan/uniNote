@@ -1,6 +1,7 @@
 package env
 
 import (
+	"crypto/rand"
 	"fmt"
 	"os"
 	"strconv"
@@ -27,6 +28,10 @@ type Config struct {
 
 	// Storage
 	PDFStoragePath string
+
+	// Security
+	MaxLoginAttempts int
+	LoginWindowMins  int
 }
 
 // LoadConfig, çevre değişkenlerinden yapılandırmayı yükler
@@ -39,6 +44,17 @@ func LoadConfig() (*Config, error) {
 	// PDF depolama dizinini oluştur (yoksa)
 	if err := os.MkdirAll("./storage/pdfs", 0755); err != nil {
 		fmt.Println("UYARI: PDF depolama dizini oluşturulamadı:", err)
+	}
+
+	// JWT Secret için rastgele değer oluştur (eğer tanımlanmamışsa)
+	jwtSecret := getEnv("JWT_SECRET", "")
+	if jwtSecret == "" {
+		var err error
+		jwtSecret, err = generateRandomSecret(32)
+		if err != nil {
+			return nil, fmt.Errorf("JWT secret oluşturulamadı: %v", err)
+		}
+		fmt.Println("UYARI: Rastgele JWT secret oluşturuldu. Üretim ortamında güvenli bir JWT_SECRET çevre değişkeni tanımlamanız önerilir.")
 	}
 
 	config := &Config{
@@ -54,14 +70,36 @@ func LoadConfig() (*Config, error) {
 		DBSSLMode:  getEnv("DB_SSL_MODE", "disable"),
 
 		// JWT
-		JWTSecret:     getEnv("JWT_SECRET", ""),
+		JWTSecret:     jwtSecret,
 		JWTExpiryHour: getEnvAsInt("JWT_EXPIRY_HOUR", 24),
 
 		// Storage
 		PDFStoragePath: getEnv("PDF_STORAGE_PATH", "./storage/pdfs"),
+
+		// Security
+		MaxLoginAttempts: getEnvAsInt("MAX_LOGIN_ATTEMPTS", 5),
+		LoginWindowMins:  getEnvAsInt("LOGIN_WINDOW_MINS", 15),
 	}
 
 	return config, nil
+}
+
+// generateRandomSecret, belirtilen uzunlukta rastgele bir secret oluşturur
+func generateRandomSecret(length int) (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?"
+	bytes := make([]byte, length)
+
+	// Rastgele değerler oluştur
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+
+	// Her byte için charset'ten bir karakter seç
+	for i, b := range bytes {
+		bytes[i] = charset[b%byte(len(charset))]
+	}
+
+	return string(bytes), nil
 }
 
 // getEnv, çevre değişkenini alır veya varsayılan değeri döndürür

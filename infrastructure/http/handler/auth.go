@@ -6,6 +6,7 @@ import (
 
 	"github.com/OmerFErdogan/uninote/domain"
 	"github.com/OmerFErdogan/uninote/infrastructure/http/middleware"
+	"github.com/OmerFErdogan/uninote/infrastructure/logger"
 	"github.com/OmerFErdogan/uninote/usecase"
 	"github.com/go-chi/chi/v5"
 )
@@ -31,6 +32,7 @@ func (h *AuthHandler) RegisterRoutes(r chi.Router, authMiddleware *middleware.Au
 		r.Get("/profile", h.GetProfile)
 		r.Put("/profile", h.UpdateProfile)
 		r.Post("/change-password", h.ChangePassword)
+		r.Post("/logout", h.Logout)
 	})
 }
 
@@ -108,11 +110,21 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// IP adresini al
+	ip := r.RemoteAddr
+	// X-Forwarded-For header'ı varsa, gerçek IP'yi al
+	if forwardedFor := r.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		ip = forwardedFor
+	}
+
 	// Giriş yap
-	token, err := h.authService.Login(req.Email, req.Password)
+	token, err := h.authService.Login(req.Email, req.Password, ip)
 	if err != nil {
 		if err == usecase.ErrInvalidCredentials {
 			http.Error(w, "Geçersiz kimlik bilgileri", http.StatusUnauthorized)
+			return
+		} else if err == usecase.ErrTooManyAttempts {
+			http.Error(w, "Çok fazla başarısız giriş denemesi. Lütfen daha sonra tekrar deneyin.", http.StatusTooManyRequests)
 			return
 		}
 		http.Error(w, "Giriş sırasında hata: "+err.Error(), http.StatusInternalServerError)
@@ -123,6 +135,29 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(TokenResponse{
 		Token: token,
+	})
+}
+
+// Logout, kullanıcı çıkışı yapar
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	// Token'ı al
+	token, ok := middleware.GetToken(r)
+	if !ok {
+		http.Error(w, "Token bulunamadı", http.StatusBadRequest)
+		return
+	}
+
+	// Token'ı iptal et
+	if err := h.authService.RevokeToken(token); err != nil {
+		logger.Error("Token iptal edilirken hata oluştu: %v", err)
+		http.Error(w, "Çıkış sırasında hata: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Başarılı yanıt
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Başarıyla çıkış yapıldı",
 	})
 }
 

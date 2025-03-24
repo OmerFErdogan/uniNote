@@ -33,8 +33,11 @@ type UserRepository interface {
 // UserService, kullanıcı ile ilgili iş mantığını içerir
 type UserService interface {
 	Register(user *User) error
-	Login(email, password string) (string, error) // JWT token döner
+	Login(email, password string, ip string) (string, error) // JWT token döner
 	GetProfile(id uint) (*User, error)
 	UpdateProfile(user *User) error
 	ChangePassword(id uint, oldPassword, newPassword string) error
+	RevokeToken(tokenString string) error
+	CleanupExpiredTokens() error
+	CleanupOldLoginAttempts() error
 }

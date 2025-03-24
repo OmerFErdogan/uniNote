@@ -60,6 +60,8 @@ func main() {
 		&postgres.PDFAnnotationModel{},
 		&postgres.ContentLikeModel{},
 		&postgres.InviteModel{},
+		&postgres.RevokedTokenModel{},
+		&postgres.LoginAttemptModel{},
 	)
 	if err != nil {
 		logger.Error("Veritabanı migrasyonu başarısız: %v", err)
@@ -76,6 +78,8 @@ func main() {
 	pdfAnnotationRepo := postgres.NewPDFAnnotationRepository(db)
 	likeRepo := postgres.NewLikeRepository(db)
 	inviteRepo := postgres.NewInviteRepository(db)
+	tokenRepo := postgres.NewTokenRepository(db)
+	loginAttemptRepo := postgres.NewLoginAttemptRepository(db)
 
 	// PDF depolama servisini oluştur
 	pdfStorage, err := localfs.NewPDFStorage(config.PDFStoragePath)
@@ -84,7 +88,15 @@ func main() {
 	}
 
 	// Servisleri oluştur
-	authService := usecase.NewAuthService(userRepo, config.JWTSecret, config.JWTExpiryHour)
+	authService := usecase.NewAuthService(
+		userRepo,
+		tokenRepo,
+		loginAttemptRepo,
+		config.JWTSecret,
+		config.JWTExpiryHour,
+		config.MaxLoginAttempts,
+		config.LoginWindowMins,
+	)
 	noteService := usecase.NewNoteService(noteRepo, commentRepo)
 	pdfService := usecase.NewPDFService(pdfRepo, pdfCommentRepo, pdfAnnotationRepo, pdfStorage)
 	likeService := usecase.NewLikeService(likeRepo, noteRepo, pdfRepo)
@@ -155,6 +167,24 @@ func main() {
 	// Eğer web klasörü yoksa veya dosyalarınızı başka bir şekilde sunmak istiyorsanız bu kısmı kaldırabilirsiniz
 	fs := http.FileServer(http.Dir("./web"))
 	router.Get("/web/*", http.StripPrefix("/web/", fs).ServeHTTP)
+
+	// Süresi dolmuş token'ları ve eski giriş denemelerini temizlemek için periyodik görevler
+	go func() {
+		ticker := time.NewTicker(24 * time.Hour) // Her 24 saatte bir çalıştır
+		defer ticker.Stop()
+
+		for range ticker.C {
+			// Süresi dolmuş token'ları temizle
+			if err := authService.CleanupExpiredTokens(); err != nil {
+				logger.Error("Süresi dolmuş token'lar temizlenirken hata oluştu: %v", err)
+			}
+
+			// Eski giriş denemelerini temizle
+			if err := authService.CleanupOldLoginAttempts(); err != nil {
+				logger.Error("Eski giriş denemeleri temizlenirken hata oluştu: %v", err)
+			}
+		}
+	}()
 
 	// Sunucuyu başlat
 	port := ":" + config.ServerPort

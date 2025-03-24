@@ -41,12 +41,18 @@ func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 		// Token'ı doğrula
 		userID, err := m.authService.ValidateToken(tokenString)
 		if err != nil {
+			if err == usecase.ErrTokenRevoked {
+				http.Error(w, "Token iptal edilmiş", http.StatusUnauthorized)
+				return
+			}
 			http.Error(w, "Geçersiz token: "+err.Error(), http.StatusUnauthorized)
 			return
 		}
 
 		// Kullanıcı ID'sini context'e ekle
 		ctx := context.WithValue(r.Context(), "userID", userID)
+		// Token'ı context'e ekle (çıkış yapma işlemi için)
+		ctx = context.WithValue(ctx, "token", tokenString)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -55,6 +61,12 @@ func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 func GetUserID(r *http.Request) (uint, bool) {
 	userID, ok := r.Context().Value("userID").(uint)
 	return userID, ok
+}
+
+// GetToken, context'ten token'ı alır
+func GetToken(r *http.Request) (string, bool) {
+	token, ok := r.Context().Value("token").(string)
+	return token, ok
 }
 
 // RequireAuth, kimlik doğrulama gerektiren handler'lar için bir yardımcı fonksiyon

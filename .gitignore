@@ -1,0 +1,10 @@
+# Ortak ignore'lar
+.env
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.exe
+node_modules/
+dist/
+bin/
