@@ -50,12 +50,9 @@ func (s *ViewService) RecordView(userID, contentID uint, contentType string) err
 			return nil
 		}
 
-		// Not özel ise, kullanıcının erişim izni olup olmadığını kontrol et
-		if !note.IsPublic {
-			// Burada davet bağlantısı kontrolü yapılabilir
-			// Şimdilik sadece özel notları görüntüleme kaydı tutmuyoruz
-			return nil
-		}
+		// Not özel ise, görüntüleme kaydı tutmak daha önemli
+		// Herkese açık notlarda kimin görüntülediği çok önemli değil
+		// Ancak yine de her iki durumda da görüntüleme kaydı tutuyoruz
 
 		// Görüntüleme sayısını artır
 		if err := s.noteRepo.IncrementViewCount(contentID); err != nil {
@@ -78,12 +75,9 @@ func (s *ViewService) RecordView(userID, contentID uint, contentType string) err
 			return nil
 		}
 
-		// PDF özel ise, kullanıcının erişim izni olup olmadığını kontrol et
-		if !pdf.IsPublic {
-			// Burada davet bağlantısı kontrolü yapılabilir
-			// Şimdilik sadece özel PDF'leri görüntüleme kaydı tutmuyoruz
-			return nil
-		}
+		// PDF özel ise, görüntüleme kaydı tutmak daha önemli
+		// Herkese açık PDF'lerde kimin görüntülediği çok önemli değil
+		// Ancak yine de her iki durumda da görüntüleme kaydı tutuyoruz
 
 		// Görüntüleme sayısını artır
 		if err := s.pdfRepo.IncrementViewCount(contentID); err != nil {
