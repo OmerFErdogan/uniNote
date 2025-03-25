@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+// Logger, uygulama loglaması için kullanılan yapıdır
+type Logger struct {
+	infoLogger  *log.Logger
+	errorLogger *log.Logger
+	debugLogger *log.Logger
+}
+
 var (
 	// InfoLogger, bilgi mesajları için logger
 	InfoLogger *log.Logger
@@ -15,6 +22,56 @@ var (
 	// DebugLogger, hata ayıklama mesajları için logger
 	DebugLogger *log.Logger
 )
+
+// NewLogger, yeni bir Logger örneği oluşturur
+func NewLogger() *Logger {
+	return &Logger{
+		infoLogger:  InfoLogger,
+		errorLogger: ErrorLogger,
+		debugLogger: DebugLogger,
+	}
+}
+
+// Info, bilgi mesajı loglar
+func (l *Logger) Info(message string, keysAndValues ...interface{}) {
+	if l.infoLogger != nil {
+		l.logWithKeyValues(l.infoLogger, message, keysAndValues...)
+	}
+}
+
+// Error, hata mesajı loglar
+func (l *Logger) Error(message string, keysAndValues ...interface{}) {
+	if l.errorLogger != nil {
+		l.logWithKeyValues(l.errorLogger, message, keysAndValues...)
+	}
+}
+
+// Debug, hata ayıklama mesajı loglar
+func (l *Logger) Debug(message string, keysAndValues ...interface{}) {
+	if l.debugLogger != nil {
+		l.logWithKeyValues(l.debugLogger, message, keysAndValues...)
+	}
+}
+
+// logWithKeyValues, anahtar-değer çiftleriyle log mesajı oluşturur
+func (l *Logger) logWithKeyValues(logger *log.Logger, message string, keysAndValues ...interface{}) {
+	if len(keysAndValues) == 0 {
+		logger.Println(message)
+		return
+	}
+
+	// Anahtar-değer çiftlerini formatlı şekilde ekle
+	logMessage := message
+	for i := 0; i < len(keysAndValues); i += 2 {
+		key := keysAndValues[i]
+		var value interface{} = "<?>"
+		if i+1 < len(keysAndValues) {
+			value = keysAndValues[i+1]
+		}
+		logMessage += fmt.Sprintf(" %v=%v", key, value)
+	}
+	logger.Println(logMessage)
+}
 
 // Init, logger'ları başlatır
 func Init() {

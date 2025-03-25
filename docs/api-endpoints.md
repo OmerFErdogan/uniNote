@@ -11,6 +11,7 @@ Bu doküman, UniNotes platformundaki tüm API endpoint'lerini ve kullanımların
 - [Beğeni (Like) API](#beğeni-like-api)
 - [Yorum (Comment) API](#yorum-comment-api)
 - [Davet Bağlantısı (Invite) API](#davet-bağlantısı-invite-api)
+- [Görüntüleme Takip (View) API](#görüntüleme-takip-view-api)
 
 ## Genel Bilgiler
 
@@ -1092,5 +1093,148 @@ PDF dosyası içeriği (application/pdf)
   "commentCount": 3,
   "createdAt": "2025-03-20T04:00:00Z",
   "updatedAt": "2025-03-22T04:00:00Z"
+}
+```
+
+## Görüntüleme Takip (View) API
+
+### Not Görüntüleme
+
+**Endpoint:** `GET /api/v1/notes/{id}/view`
+
+**Açıklama:** Bir notu görüntüler ve kullanıcı giriş yapmışsa görüntüleme kaydı oluşturur.
+
+**Kimlik Doğrulama:** Opsiyonel (Kimlik doğrulama yapılmışsa görüntüleme kaydı oluşturulur)
+
+**URL Parametreleri:**
+- `id` (zorunlu): Görüntülenecek notun ID'si
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "message": "Not görüntülendi"
+}
+```
+
+### PDF Görüntüleme
+
+**Endpoint:** `GET /api/v1/pdfs/{id}/view`
+
+**Açıklama:** Bir PDF'i görüntüler ve kullanıcı giriş yapmışsa görüntüleme kaydı oluşturur.
+
+**Kimlik Doğrulama:** Opsiyonel (Kimlik doğrulama yapılmışsa görüntüleme kaydı oluşturulur)
+
+**URL Parametreleri:**
+- `id` (zorunlu): Görüntülenecek PDF'in ID'si
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "message": "PDF görüntülendi"
+}
+```
+
+### İçerik Görüntüleme Kayıtlarını Getirme
+
+**Endpoint:** `GET /api/v1/views/content/{type}/{id}`
+
+**Açıklama:** Bir içeriğin (not veya PDF) görüntüleme kayıtlarını döndürür. Sadece içerik sahibi bu endpoint'e erişebilir.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**URL Parametreleri:**
+- `type` (zorunlu): İçerik türü (`note` veya `pdf`)
+- `id` (zorunlu): İçerik ID'si
+
+**Sorgu Parametreleri:**
+- `limit` (opsiyonel): Sayfa başına kayıt sayısı (varsayılan: 10)
+- `offset` (opsiyonel): Atlanacak kayıt sayısı (varsayılan: 0)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "views": [
+    {
+      "id": 1,
+      "userId": 2,
+      "username": "johndoe",
+      "firstName": "John",
+      "lastName": "Doe",
+      "contentId": 5,
+      "type": "note",
+      "viewedAt": "2025-03-24T15:30:45Z"
+    },
+    {
+      "id": 2,
+      "userId": 3,
+      "username": "janedoe",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "contentId": 5,
+      "type": "note",
+      "viewedAt": "2025-03-24T16:20:10Z"
+    }
+  ],
+  "pagination": {
+    "limit": 10,
+    "offset": 0
+  }
+}
+```
+
+### Kullanıcı Görüntüleme Kayıtlarını Getirme
+
+**Endpoint:** `GET /api/v1/views/user`
+
+**Açıklama:** Kullanıcının görüntüleme kayıtlarını döndürür.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**Sorgu Parametreleri:**
+- `limit` (opsiyonel): Sayfa başına kayıt sayısı (varsayılan: 10)
+- `offset` (opsiyonel): Atlanacak kayıt sayısı (varsayılan: 0)
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "views": [
+    {
+      "id": 1,
+      "userId": 1,
+      "contentId": 5,
+      "type": "note",
+      "viewedAt": "2025-03-24T15:30:45Z"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "contentId": 8,
+      "type": "pdf",
+      "viewedAt": "2025-03-24T16:20:10Z"
+    }
+  ],
+  "pagination": {
+    "limit": 10,
+    "offset": 0
+  }
+}
+```
+
+### Görüntüleme Durumu Kontrolü
+
+**Endpoint:** `GET /api/v1/views/check`
+
+**Açıklama:** Kullanıcının bir içeriği görüntüleyip görüntülemediğini kontrol eder.
+
+**Kimlik Doğrulama:** Gerekli (JWT Token)
+
+**Sorgu Parametreleri:**
+- `type` (zorunlu): İçerik türü (`note` veya `pdf`)
+- `contentId` (zorunlu): İçerik ID'si
+
+**Başarılı Yanıt (200 OK):**
+```json
+{
+  "viewed": true
 }
 ```

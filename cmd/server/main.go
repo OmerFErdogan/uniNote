@@ -62,6 +62,7 @@ func main() {
 		&postgres.InviteModel{},
 		&postgres.RevokedTokenModel{},
 		&postgres.LoginAttemptModel{},
+		&postgres.ViewModel{},
 	)
 	if err != nil {
 		logger.Error("Veritabanı migrasyonu başarısız: %v", err)
@@ -80,6 +81,7 @@ func main() {
 	inviteRepo := postgres.NewInviteRepository(db)
 	tokenRepo := postgres.NewTokenRepository(db)
 	loginAttemptRepo := postgres.NewLoginAttemptRepository(db)
+	viewRepo := postgres.NewViewRepository(db)
 
 	// PDF depolama servisini oluştur
 	pdfStorage, err := localfs.NewPDFStorage(config.PDFStoragePath)
@@ -102,6 +104,7 @@ func main() {
 	likeService := usecase.NewLikeService(likeRepo, noteRepo, pdfRepo)
 	commentService := usecase.NewCommentService(noteRepo, commentRepo, pdfRepo, pdfCommentRepo, userRepo)
 	inviteService := usecase.NewInviteService(inviteRepo, noteRepo, pdfRepo)
+	viewService := usecase.NewViewService(viewRepo, userRepo, noteRepo, pdfRepo, logger.NewLogger())
 
 	// Middleware'leri oluştur
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -112,6 +115,7 @@ func main() {
 	pdfHandler := handler.NewPDFHandler(pdfService, likeService, commentService)
 	likeHandler := handler.NewLikeHandler(likeService)
 	inviteHandler := handler.NewInviteHandler(inviteService, noteService, pdfService)
+	viewHandler := handler.NewViewHandler(viewService, noteService, pdfService, logger.NewLogger())
 
 	// Router'ı oluştur
 	router := apphttp.NewRouter()
@@ -161,6 +165,9 @@ func main() {
 
 		// Davet bağlantısı endpoint'leri
 		inviteHandler.RegisterRoutes(r, authMiddleware)
+
+		// Görüntüleme takip endpoint'leri
+		viewHandler.RegisterRoutes(r, authMiddleware)
 	})
 
 	// Statik dosyaları web klasöründen sun (isteğe bağlı)
