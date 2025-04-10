@@ -198,5 +198,22 @@ func (s *NoteService) UnlikeNote(noteID uint, userID uint) error {
 	return s.noteRepo.DecrementLikeCount(noteID)
 }
 
+// GetNoteByInviteToken, davet bağlantısı ile erişim için bir notu getirir
+// Bu fonksiyon erişim kontrolü yapmadan doğrudan notu getirir
+func (s *NoteService) GetNoteByInviteToken(id uint) (*domain.Note, error) {
+	note, err := s.noteRepo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("not arama sırasında hata: %w", err)
+	}
+	if note == nil {
+		return nil, ErrNoteNotFound
+	}
+
+	// Görüntülenme sayısını artır
+	s.noteRepo.IncrementViewCount(id)
+
+	return note, nil
+}
+
 // Ensure NoteService implements domain.NoteService
 var _ domain.NoteService = (*NoteService)(nil)

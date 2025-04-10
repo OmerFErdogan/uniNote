@@ -279,5 +279,22 @@ func (s *PDFService) UnlikePDF(pdfID uint, userID uint) error {
 	return s.pdfRepo.DecrementLikeCount(pdfID)
 }
 
+// GetPDFByInviteToken, davet bağlantısı ile erişim için bir PDF'i getirir
+// Bu fonksiyon erişim kontrolü yapmadan doğrudan PDF'i getirir
+func (s *PDFService) GetPDFByInviteToken(id uint) (*domain.PDF, error) {
+	pdf, err := s.pdfRepo.FindByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("PDF arama sırasında hata: %w", err)
+	}
+	if pdf == nil {
+		return nil, ErrPDFNotFound
+	}
+
+	// Görüntülenme sayısını artır
+	s.pdfRepo.IncrementViewCount(id)
+
+	return pdf, nil
+}
+
 // Ensure PDFService implements domain.PDFService
 var _ domain.PDFService = (*PDFService)(nil)

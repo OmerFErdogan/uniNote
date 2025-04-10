@@ -1042,7 +1042,7 @@ PDF dosyası içeriği (application/pdf)
 
 **Endpoint:** `GET /api/v1/notes/invite/{token}`
 
-**Açıklama:** Belirtilen davet bağlantısı ile bir notu getirir.
+**Açıklama:** Belirtilen davet bağlantısı ile bir notu getirir. Bu endpoint, davet bağlantısı ile özel notlara erişim sağlar. Davet bağlantısı geçerli ise, notun `isPublic` değeri `false` olsa bile nota erişim sağlanabilir.
 
 **Kimlik Doğrulama:** Gerekli değil
 
@@ -1070,7 +1070,7 @@ PDF dosyası içeriği (application/pdf)
 
 **Endpoint:** `GET /api/v1/pdfs/invite/{token}`
 
-**Açıklama:** Belirtilen davet bağlantısı ile bir PDF'i getirir.
+**Açıklama:** Belirtilen davet bağlantısı ile bir PDF'i getirir. Bu endpoint, davet bağlantısı ile özel PDF'lere erişim sağlar. Davet bağlantısı geçerli ise, PDF'in `isPublic` değeri `false` olsa bile PDF'e erişim sağlanabilir.
 
 **Kimlik Doğrulama:** Gerekli değil
 

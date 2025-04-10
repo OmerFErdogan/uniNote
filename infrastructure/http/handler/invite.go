@@ -379,10 +379,27 @@ func (h *InviteHandler) DeactivateInvite(w http.ResponseWriter, r *http.Request)
 
 // ValidateInvite, bir davet bağlantısının geçerli olup olmadığını kontrol eder
 func (h *InviteHandler) ValidateInvite(w http.ResponseWriter, r *http.Request) {
-	// Token'ı al
+	// Token'ı al - önce URL parametresinden dene
 	token := chi.URLParam(r, "token")
+
+	// Eğer URL'de yoksa, header'dan kontrol et
+	if token == "" {
+		token = r.Header.Get("X-Invite-Token")
+	}
+
 	if token == "" {
 		http.Error(w, "Geçersiz token", http.StatusBadRequest)
+		return
+	}
+
+	// CORS header'larını ekle
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Invite-Token")
+
+	// OPTIONS isteği ise hemen yanıt ver
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -409,6 +426,9 @@ func (h *InviteHandler) ValidateInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Content-Type header'ını ayarla
+	w.Header().Set("Content-Type", "application/json")
+
 	// Başarılı yanıt
 	response := map[string]interface{}{
 		"valid":     valid,
@@ -423,10 +443,27 @@ func (h *InviteHandler) ValidateInvite(w http.ResponseWriter, r *http.Request) {
 
 // GetNoteByInvite, davet bağlantısı ile bir notu getirir
 func (h *InviteHandler) GetNoteByInvite(w http.ResponseWriter, r *http.Request) {
-	// Token'ı al
+	// Token'ı al - önce URL parametresinden dene
 	token := chi.URLParam(r, "token")
+
+	// Eğer URL'de yoksa, header'dan kontrol et
+	if token == "" {
+		token = r.Header.Get("X-Invite-Token")
+	}
+
 	if token == "" {
 		http.Error(w, "Geçersiz token", http.StatusBadRequest)
+		return
+	}
+
+	// CORS header'larını ekle
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Invite-Token")
+
+	// OPTIONS isteği ise hemen yanıt ver
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -463,8 +500,9 @@ func (h *InviteHandler) GetNoteByInvite(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Notu getir
-	note, err := h.noteService.GetNote(invite.ContentID)
+	// Davet bağlantısı ile erişim için özel fonksiyonu kullan
+	// Bu fonksiyon erişim kontrolü yapmadan doğrudan notu getirir
+	note, err := h.noteService.GetNoteByInviteToken(invite.ContentID)
 	if err != nil {
 		if err == usecase.ErrNoteNotFound {
 			http.Error(w, "Not bulunamadı", http.StatusNotFound)
@@ -474,6 +512,10 @@ func (h *InviteHandler) GetNoteByInvite(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Content-Type header'ını ayarla
+	w.Header().Set("Content-Type", "application/json")
+
+	// Davet bağlantısı ile erişim sağlandığı için, özel notlara da erişim izni var
 	// Başarılı yanıt
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(note)
@@ -481,10 +523,27 @@ func (h *InviteHandler) GetNoteByInvite(w http.ResponseWriter, r *http.Request) 
 
 // GetPDFByInvite, davet bağlantısı ile bir PDF'i getirir
 func (h *InviteHandler) GetPDFByInvite(w http.ResponseWriter, r *http.Request) {
-	// Token'ı al
+	// Token'ı al - önce URL parametresinden dene
 	token := chi.URLParam(r, "token")
+
+	// Eğer URL'de yoksa, header'dan kontrol et
+	if token == "" {
+		token = r.Header.Get("X-Invite-Token")
+	}
+
 	if token == "" {
 		http.Error(w, "Geçersiz token", http.StatusBadRequest)
+		return
+	}
+
+	// CORS header'larını ekle
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Invite-Token")
+
+	// OPTIONS isteği ise hemen yanıt ver
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -521,8 +580,9 @@ func (h *InviteHandler) GetPDFByInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// PDF'i getir
-	pdf, err := h.pdfService.GetPDF(invite.ContentID)
+	// Davet bağlantısı ile erişim için özel fonksiyonu kullan
+	// Bu fonksiyon erişim kontrolü yapmadan doğrudan PDF'i getirir
+	pdf, err := h.pdfService.GetPDFByInviteToken(invite.ContentID)
 	if err != nil {
 		if err == usecase.ErrPDFNotFound {
 			http.Error(w, "PDF bulunamadı", http.StatusNotFound)
@@ -532,6 +592,10 @@ func (h *InviteHandler) GetPDFByInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Content-Type header'ını ayarla
+	w.Header().Set("Content-Type", "application/json")
+
+	// Davet bağlantısı ile erişim sağlandığı için, özel PDF'lere de erişim izni var
 	// Başarılı yanıt
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(pdf)
